@@ -1,5 +1,6 @@
 package com.cinema.CinemaRoom.businesslayer;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -19,12 +20,15 @@ public class Seats {
     final int totalColumns = 9;
 
     @JsonProperty("available_seats")
-    ArrayList<Seat> seatList = new ArrayList<>(totalRows * totalColumns);
+    ArrayList<Seat> seatAvailableList = new ArrayList<>(totalRows * totalColumns);
+
+    @JsonIgnore
+    ArrayList<Seat> seatNotAvailableList = new ArrayList<>(totalRows * totalColumns);
 
     public Seats() {
         for (int i = 1; i <= totalRows; i++) {
             for (int j = 1; j <= totalColumns; j++) {
-                seatList.add(new Seat(i,j));
+                seatAvailableList.add(new Seat(i,j));
             }
         }
     }
@@ -37,11 +41,39 @@ public class Seats {
         return totalColumns;
     }
 
-    public ArrayList<Seat> getSeatList() {
-        return seatList;
+    public ArrayList<Seat> seatAvailableList() {
+        return seatAvailableList;
     }
 
-    public void setSeatList(ArrayList<Seat> seatList) {
-        this.seatList = seatList;
+    public void seatAvailableList(ArrayList<Seat> seatList) {
+        this.seatAvailableList = seatList;
+    }
+
+    public ArrayList<Seat> getSeatAvailableList() {
+        return seatAvailableList;
+    }
+
+    public void setSeatAvailableList(ArrayList<Seat> seatAvailableList) {
+        this.seatAvailableList = seatAvailableList;
+    }
+
+    public ArrayList<Seat> getSeatNotAvailableList() {
+        return seatNotAvailableList;
+    }
+
+    public void setSeatNotAvailableList(ArrayList<Seat> seatNotAvailableList) {
+        this.seatNotAvailableList = seatNotAvailableList;
+    }
+
+    public void buySeat(Seat seat) {
+        int row = seat.getRow();
+        int col = seat.getColumn();
+        for (Seat seat1 : seatNotAvailableList) {
+            if (seat1.getRow() == row && seat1.getColumn() == col) {
+                throw new RuntimeException();
+            }
+        }
+        seatNotAvailableList.add(seatAvailableList.get((row - 1) * totalColumns + (col - 1)));
+        seatAvailableList.remove((row - 1) * totalColumns + (col - 1));
     }
 }
