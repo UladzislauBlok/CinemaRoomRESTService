@@ -23,11 +23,8 @@ public class SeatsController {
             return new ResponseEntity<>(Map.of("error" , "The number of a row or a column is out of bounds!"), HttpStatus.BAD_REQUEST);
         }
         try {
-            return new ResponseEntity<>(
-                    Map.of("token", seats.buySeat(seat), "ticket",
-                            seats.getSeatNotAvailableList().get(seats.getSeatNotAvailableList().size() - 1)),
-                    HttpStatus.OK);
-
+            seats.buySeat(seat);
+            return seats.getSeatNotAvailableList().get(seats.getSeatNotAvailableList().size() - 1);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(Map.of("error" , "The ticket has been already purchased!"), HttpStatus.BAD_REQUEST);
         }

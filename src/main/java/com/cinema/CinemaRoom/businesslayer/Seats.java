@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.util.UUID.randomUUID;
 
@@ -27,10 +25,7 @@ public class Seats {
     ArrayList<Seat> seatAvailableList = new ArrayList<>(TOTAL_ROWS * TOTAL_COLUMNS);
 
     @JsonIgnore
-    ArrayList<Seat> seatNotAvailableList = new ArrayList<>(TOTAL_ROWS * TOTAL_COLUMNS);
-
-    @JsonIgnore
-    Map<String, Seat> seatNotAvailableMap = new HashMap<>();
+    ArrayList<Ticket> seatNotAvailableList = new ArrayList<>(TOTAL_ROWS * TOTAL_COLUMNS);
 
     public Seats() {
         for (int i = 1; i <= TOTAL_ROWS; i++) {
@@ -55,16 +50,16 @@ public class Seats {
         return seatAvailableList;
     }
 
-    public ArrayList<Seat> getSeatNotAvailableList() {
+    public ArrayList<Ticket> getSeatNotAvailableList() {
         return seatNotAvailableList;
     }
 
-    public String buySeat(Seat seat) {
+    public void buySeat(Seat seat) {
         int row = seat.getRow();
         int col = seat.getColumn();
 
-        for (Seat seat1 : seatNotAvailableList) {
-            if (seat1.getRow() == row && seat1.getColumn() == col) {
+        for (Ticket ticket : seatNotAvailableList) {
+            if (ticket.seat.getRow() == row && ticket.getSeat().getColumn() == col) {
                 // We check if this seat was purchased, if so, we generate an exception
                 throw new RuntimeException();
             }
@@ -72,46 +67,39 @@ public class Seats {
 
         String token = String.valueOf(randomUUID());
 
-        for (Seat seat1 : seatAvailableList) {
-            if (seat1.getRow() == row && seat1.getColumn() == col) {
+        for (Seat seatAvailable : seatAvailableList) {
+            if (seatAvailable.getRow() == row && seatAvailable.getColumn() == col) {
                 // We add the place to the list of purchased, and to the card with the token. Remove from available
-                seatNotAvailableList.add(seat1);
-                seatAvailableList.remove(seat1);
-                seatNotAvailableMap.put(token, seat1);
+                seatNotAvailableList.add(new Ticket(seatAvailable, token));
+                seatAvailableList.remove(seatAvailable);
                 break;
             }
         }
-
-        return token;
     }
 
     public Seat returnSeat(Token t) {
         String token = t.getToken();
 
-        if (!seatNotAvailableMap.containsKey(token)) {
-            // Checking the card for a token
-            throw new RuntimeException();
-        } else {
-            Seat seat = seatNotAvailableMap.get(token);
-            // Removing space from purchased(array and map)
-            seatNotAvailableMap.remove(token);
-            for (Seat seat1 : seatNotAvailableList) {
-                if (seat1.equals(seat)) {
-                    seatNotAvailableList.remove(seat1);
-                    break;
-                }
-            }
+        for (Ticket ticket : seatNotAvailableList) {
+            if (ticket.getToken().equals(token)) {
 
-            // Again, add to the available
-            seatAvailableList.add(seat);
-            return seat;
+                // Again, add to the available
+                seatAvailableList.add(ticket.getSeat());
+
+                // Removing space from purchased
+                seatNotAvailableList.remove(ticket);
+                return ticket.getSeat();
+            }
         }
+
+        // If a ticket with this token was not found, we generate an exception
+        throw new RuntimeException();
     }
 
     public Object stats() {
         int currentIncome = 0;
-        for (Seat seat : seatNotAvailableList) {
-            currentIncome += seat.getPrice();
+        for (Ticket ticket : seatNotAvailableList) {
+            currentIncome += ticket.getSeat().getPrice();
         }
 
         int numberOfAvailableSeats = seatAvailableList.size();
